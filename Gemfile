@@ -57,7 +57,7 @@ gem "jsonapi-serializer", "~> 2.1" # Serializer for Ruby objects
 gem "kaminari", "~> 1.2" # A Scope & Engine based, clean, powerful, customizable and sophisticated paginator
 gem "katex", "~> 0.6.0" # This rubygem enables you to render TeX math to HTML using KaTeX. It uses ExecJS under the hood
 gem "liquid", "~> 4.0" # A secure, non-evaling end user template engine with aesthetic markup
-gem "mini_racer", "~> 0.3.1" # Minimal embedded v8
+# gem "mini_racer", "~> 0.3.1" # Minimal embedded v8
 # gem "miro", "~> 0.4" # Extract colors from image
 gem "nokogiri", "~> 1.10" # HTML, XML, SAX, and Reader parser
 gem "octokit", "~> 4.19" # Simple wrapper for the GitHub API
@@ -171,3 +171,5 @@ end
 group :doc do
   gem "sdoc", "~> 1.1" # rdoc generator html with javascript search index
 end
+
+gem "dry-effects"

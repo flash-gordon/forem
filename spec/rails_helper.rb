@@ -89,7 +89,7 @@ RSpec.configure do |config|
     # which we can then use to properly set the browser time for Capybara specs
     ENV["TZ"] = Time.zone.tzinfo.name
 
-    Search::Cluster.recreate_indexes
+    # Search::Cluster.recreate_indexes
   end
 
   config.before do
