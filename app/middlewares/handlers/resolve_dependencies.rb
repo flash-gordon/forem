@@ -9,7 +9,13 @@ module Handlers
     end
 
     def call(env)
-      provide(::PracticalDeveloper::Container) { @app.(env) }
+      provide(::PracticalDeveloper::Container, overridable: overridable?) do
+        @app.(env)
+      end
+    end
+
+    def overridable?
+      Rails.env.test?
     end
   end
 end
