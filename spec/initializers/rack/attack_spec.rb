@@ -1,8 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Rack::Attack, type: :request, throttle: true do
-  include Dry::Effects::Handler.Timestamp
-
+RSpec.describe Rack::Attack, :frozen_timestamps, type: :request, throttle: true do
   before(:all) do
     Rack::Attack::Cache.prepend(Module.new {
       include Dry::Effects.Timestamp
@@ -14,11 +12,6 @@ RSpec.describe Rack::Attack, type: :request, throttle: true do
         ["#{prefix}:#{(@last_epoch_time / period).to_i}:#{unprefixed_key}", expires_in]
       end
     })
-  end
-
-  around do
-    now = Time.now
-    with_timestamp(-> { now }, &_1)
   end
 
   before do
