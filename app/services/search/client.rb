@@ -2,6 +2,8 @@ module Search
   # Search client (uses Elasticsearch as a backend)
   class Client
     class << self
+      include Dry::Effects.Resolve(:tracing)
+
       # adapted from https://api.rubyonrails.org/classes/Module.html#method-i-delegate_missing_to
       def method_missing(method, *args, &block)
         return super unless target.respond_to?(method, false)
@@ -46,8 +48,8 @@ module Search
       end
 
       def record_error(error_message, class_name)
-        Honeycomb.add_field("elasticsearch.result", "error")
-        Honeycomb.add_field("elasticsearch.error", class_name)
+        tracing.add_field("elasticsearch.result", "error")
+        tracing.add_field("elasticsearch.error", class_name)
         DatadogStatsClient.increment("elasticsearch.errors", tags: ["error:#{class_name}", "message:#{error_message}"])
       end
 

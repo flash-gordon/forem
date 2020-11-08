@@ -14,6 +14,7 @@ class ApplicationController < ActionController::Base
   include VerifySetupCompleted
   include DevelopmentDependencyChecks if Rails.env.development?
   include Devise::Controllers::Rememberable
+  include Dry::Effects.Resolve(:tracing)
 
   rescue_from ActionView::MissingTemplate, with: :routing_error
 
@@ -69,7 +70,7 @@ class ApplicationController < ActionController::Base
 
   def authenticate_user!
     if current_user
-      Honeycomb.add_field("current_user_id", current_user.id)
+      tracing.add_field("current_user_id", current_user.id)
       return
     end
 

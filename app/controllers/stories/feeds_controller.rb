@@ -66,7 +66,7 @@ module Stories
     def optimized_signed_in_feed
       feed = Articles::Feeds::LargeForemExperimental.new(user: current_user, page: @page, tag: params[:tag])
       test_variant = field_test(:user_home_feed, participant: current_user)
-      Honeycomb.add_field("field_test_user_home_feed", test_variant) # Monitoring different variants
+      tracing.add_field("field_test_user_home_feed", test_variant) # Monitoring different variants
       if VARIANTS[test_variant].nil? || test_variant == "base"
         feed.default_home_feed(user_signed_in: true)
       else

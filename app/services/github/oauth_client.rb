@@ -4,6 +4,8 @@ module Github
     APP_AUTH_CREDENTIALS = %i[client_id client_secret].freeze
     APP_AUTH_CREDENTIALS_PRESENT = proc { |key, value| APP_AUTH_CREDENTIALS.include?(key) && value.present? }.freeze
 
+    include Dry::Effects.Resolve(:tracing)
+
     # @param credentials [Hash] the OAuth credentials, {client_id:, client_secret:} or {access_token:}
     def initialize(credentials = nil)
       credentials ||= {
@@ -61,7 +63,7 @@ module Github
     end
 
     def request
-      Honeycomb.add_field("name", "github.client")
+      tracing.add_field("name", "github.client")
       yield
     rescue Octokit::Error, Octokit::InvalidRepository => e
       record_error(e)
@@ -71,8 +73,8 @@ module Github
     def record_error(exception)
       class_name = exception.class.name.demodulize
 
-      Honeycomb.add_field("github.result", "error")
-      Honeycomb.add_field("github.error", class_name)
+      tracing.add_field("github.result", "error")
+      tracing.add_field("github.error", class_name)
       DatadogStatsClient.increment(
         "github.errors",
         tags: ["error:#{class_name}", "message:#{exception.message}"],

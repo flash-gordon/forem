@@ -1,6 +1,7 @@
 module Profiles
   class Update
     include ImageUploads
+    include Dry::Effects.Resolve(:tracing)
 
     USER_COLUMNS = Set.new(User.column_names).freeze
 
@@ -23,8 +24,8 @@ module Profiles
         @user.touch(:profile_updated_at)
         follow_hiring_tag
       else
-        Honeycomb.add_field("error", @error_message)
-        Honeycomb.add_field("errored", true)
+        tracing.add_field("error", @error_message)
+        tracing.add_field("errored", true)
       end
       self
     end

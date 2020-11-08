@@ -2,6 +2,8 @@ module TwitterClient
   # Twitter client (users twitter gem as a backend)
   class Client
     class << self
+      include Dry::Effects.Resolve(:tracing)
+
       # adapted from https://api.rubyonrails.org/classes/Module.html#method-i-delegate_missing_to
       def method_missing(method, *args, &block)
         return super unless target.respond_to?(method, false)
@@ -19,7 +21,7 @@ module TwitterClient
       private
 
       def request
-        Honeycomb.add_field("name", "twitter.client")
+        tracing.add_field("name", "twitter.client")
         yield
       rescue Twitter::Error => e
         record_error(e)
@@ -29,8 +31,8 @@ module TwitterClient
       def record_error(exception)
         class_name = exception.class.name.demodulize
 
-        Honeycomb.add_field("twitter.result", "error")
-        Honeycomb.add_field("twitter.error", class_name)
+        tracing.add_field("twitter.result", "error")
+        tracing.add_field("twitter.error", class_name)
         DatadogStatsClient.increment(
           "twitter.errors",
           tags: ["error:#{class_name}", "message:#{exception.message}"],
