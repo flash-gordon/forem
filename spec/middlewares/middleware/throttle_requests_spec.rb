@@ -1,22 +1,13 @@
 require "rails_helper"
 
-RSpec.describe Rack::Attack, :frozen_timestamps, type: :request, throttle: true do
-  before(:all) do
-    Rack::Attack::Cache.prepend(Module.new {
-      include Dry::Effects.Timestamp
+RSpec.describe Middleware::ThrottleRequests, :frozen_timestamps, type: :request, throttle: true do
+  include ::Dry::Effects::Handler.Reader(:throttling_cache)
 
-      def key_and_expiry(unprefixed_key, period)
-        @last_epoch_time = timestamp.to_i
-        # Add 1 to expires_in to avoid timing error: https://git.io/i1PHXA
-        expires_in = (period - (@last_epoch_time % period) + 1).to_i
-        ["#{prefix}:#{(@last_epoch_time / period).to_i}:#{unprefixed_key}", expires_in]
-      end
-    })
-  end
-
-  before do
+  around do
     cache_db = ActiveSupport::Cache.lookup_store(:redis_cache_store)
-    allow(Rails).to receive(:cache) { cache_db }
+    cache = Middleware::ThrottleRequests::Cache.new
+    cache.store = cache_db
+    with_throttling_cache(cache, &_1)
     cache_db.redis.flushdb
   end
 
@@ -40,20 +31,18 @@ RSpec.describe Rack::Attack, :frozen_timestamps, type: :request, throttle: true 
 
   describe "api_throttle" do
     it "throttles api get endpoints based on IP" do
-      Timecop.freeze do
-        valid_responses = Array.new(3).map do
-          get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "5.6.7.8" }
-        end
-        throttled_response = get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "5.6.7.8" }
-        new_ip_response = get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "1.1.1.1" }
-
-        valid_responses.each { |r| expect(r).not_to eq(429) }
-        expect(throttled_response).to eq(429)
-        expect(new_ip_response).not_to eq(429)
-        expect(tracing_backend.fields['fastly_client_ip']).to eql(
-          ["5.6.7.8"] * 7 + ["1.1.1.1"] * 2
-        )
+      valid_responses = Array.new(3).map do
+        get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "5.6.7.8" }
       end
+      throttled_response = get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "5.6.7.8" }
+      new_ip_response = get api_articles_path, headers: { "HTTP_FASTLY_CLIENT_IP" => "1.1.1.1" }
+
+      valid_responses.each { |r| expect(r).not_to eq(429) }
+      expect(throttled_response).to eq(429)
+      expect(new_ip_response).not_to eq(429)
+      expect(tracing_backend.fields['fastly_client_ip']).to eql(
+        ["5.6.7.8"] * 7 + ["1.1.1.1"] * 2
+      )
     end
   end
 

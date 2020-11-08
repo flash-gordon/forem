@@ -117,12 +117,6 @@ RSpec.configure do |config|
     ex.run
   end
 
-  config.around(:each, throttle: true) do |example|
-    Rack::Attack.enabled = true
-    example.run
-    Rack::Attack.enabled = false
-  end
-
   config.after do
     SiteConfig.clear_cache
   end

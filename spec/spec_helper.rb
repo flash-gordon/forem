@@ -119,14 +119,20 @@ RSpec.configure do |config|
 
   config.include Dry::Effects::Handler.Resolve
   config.include Dry::Effects::Handler.Timestamp
+  config.include Dry::Effects::Handler.Reader(:throttle_requests)
 
   config.include Dry::Effects.Timestamp
 
   config.around { provide(deps, &_1) }
   config.around { with_timestamp(&_1) }
+  config.around { with_throttle_requests(false, &_1) }
 
   config.around(frozen_timestamps: true) do
     now = timestamp
     with_timestamp(-> { now }, &_1)
+  end
+
+  config.around(throttle: true) do
+    with_throttle_requests(true, &_1)
   end
 end
