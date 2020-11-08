@@ -1,7 +1,11 @@
+require 'dry/effects'
+
 Rack::Attack.throttled_response_retry_after_header = true
 
 module Rack
   class Attack
+    extend ::Dry::Effects.Resolve(:tracing)
+
     throttle("search_throttle", limit: 5, period: 1) do |request|
       if request.path.starts_with?("/search/")
         track_and_return_ip(request.env["HTTP_FASTLY_CLIENT_IP"])
@@ -16,7 +20,7 @@ module Rack
 
     throttle("api_write_throttle", limit: 1, period: 1) do |request|
       if request.path.starts_with?("/api/") && (request.put? || request.post? || request.delete?)
-        Honeycomb.add_field("user_api_key", request.env["HTTP_API_KEY"])
+        tracing.add_field("user_api_key", request.env["HTTP_API_KEY"])
         ip_address = track_and_return_ip(request.env["HTTP_FASTLY_CLIENT_IP"])
         if request.env["HTTP_API_KEY"].present?
           "#{ip_address}-#{request.env['HTTP_API_KEY']}"
@@ -39,7 +43,7 @@ module Rack
     def self.track_and_return_ip(ip_address)
       return if ip_address.blank?
 
-      Honeycomb.add_field("fastly_client_ip", ip_address)
+      tracing.add_field("fastly_client_ip", ip_address)
       ip_address.to_s
     end
   end

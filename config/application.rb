@@ -20,6 +20,8 @@ Bundler.require(*Rails.groups)
 Dotenv::Railtie.load if Rails.env.test? || Rails.env.development?
 
 module PracticalDeveloper
+  Container = {}
+
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 5.1 # NOTE: [Rails 6] we should at least work towards updating this to 5.2
@@ -62,6 +64,7 @@ module PracticalDeveloper
     config.action_controller.per_form_csrf_tokens = false
 
     config.middleware.use SetCookieDomain
+    config.middleware.use Handlers::ResolveDependencies
 
     # NOTE: [Rails 6]
     # To improve security, Rails embeds the purpose and expiry metadata inside encrypted or signed cookies value.
