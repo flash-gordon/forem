@@ -19,6 +19,8 @@ require "dry/effects"
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+Dry::Effects.load_extensions(:rspec)
+
 # This makes Rspec fail if there's any output
 RSpec::Matchers.define_negated_matcher :avoid_outputting, :output
 ############
@@ -106,4 +108,15 @@ RSpec.configure do |config|
   # test failures related to randomization by passing the same `--seed` value
   # as the one that triggered the failure.
   Kernel.srand config.seed
+
+  config.include Module.new {
+    extend RSpec::SharedContext
+
+    let(:tracing_backend) { FakeTracing.new }
+
+    let(:deps) { { tracing: Tracing.new(tracing_backend) } }
+  }
+
+  config.include Dry::Effects::Handler.Resolve
+  config.around { provide(deps, &_1) }
 end
