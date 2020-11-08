@@ -15,6 +15,7 @@ class ApplicationController < ActionController::Base
   include DevelopmentDependencyChecks if Rails.env.development?
   include Devise::Controllers::Rememberable
   include Dry::Effects.Resolve(:tracing)
+  include Dry::Effects.Env
 
   rescue_from ActionView::MissingTemplate, with: :routing_error
 

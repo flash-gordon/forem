@@ -88,5 +88,15 @@ module PracticalDeveloper
       end
       ReservedWords.all = [ReservedWords::BASE_WORDS + top_routes].flatten.compact.uniq
     end
+
+    runner do
+      Rails::Command::RunnerCommand.prepend(Module.new {
+        include Dry::Effects::Handler.Env
+
+        def eval(...)
+          with_env({}, overridable: Rails.env.test?) { super }
+        end
+      })
+    end
   end
 end

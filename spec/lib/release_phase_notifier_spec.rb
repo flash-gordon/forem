@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe ReleasePhaseNotifier, type: :lib do
+  include Dry::Effects::Handler.Env
+
   describe ".ping_slack" do
     before do
       allow(ApplicationConfig).to receive(:[]).with("SLACK_WEBHOOK_URL").and_return("url")
@@ -9,13 +11,13 @@ RSpec.describe ReleasePhaseNotifier, type: :lib do
 
     it "sends a failure message to slack" do
       mock_slack = Slack::Notifier.new("url")
-      ENV["FAILED_COMMAND"] = "rake db:migrate"
-      failure_message = "Release Phase Failed: #{ENV['FAILED_COMMAND']}"
       allow(Slack::Notifier).to receive(:new) { mock_slack }
       allow(mock_slack).to receive(:ping)
 
-      described_class.ping_slack
-      expect(mock_slack).to have_received(:ping).with(failure_message)
+      with_env('FAILED_COMMAND' => "rake db:migrate") do
+        described_class.ping_slack
+      end
+      expect(mock_slack).to have_received(:ping).with("Release Phase Failed: rake db:migrate")
     end
 
     it "bails when config variables are missing" do
