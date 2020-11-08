@@ -1,4 +1,8 @@
+require 'dry/effects'
+
 class Collection < ApplicationRecord
+  include ::Dry::Effects.Timestamp
+
   has_many :articles, dependent: :nullify
 
   belongs_to :user
@@ -20,6 +24,6 @@ class Collection < ApplicationRecord
   private
 
   def touch_articles
-    articles.touch_all
+    articles.touch_all(time: timestamp)
   end
 end

@@ -44,7 +44,8 @@ RSpec.describe Collection, type: :model do
     it "touches all articles in the collection" do
       before_times = collection.articles.order(updated_at: :desc).pluck(:updated_at).map(&:to_i)
 
-      Timecop.freeze(1.month.from_now) do
+      future = timestamp + 1.month
+      with_timestamp(-> { future }) do
         collection.touch
       end
 
