@@ -2,11 +2,11 @@ require 'dry/effects'
 
 module SidekiqMiddleware
   module Handlers
-    class ResolveDependencies
-      include ::Dry::Effects::Handler.Resolve
+    class Timestamp
+      include ::Dry::Effects::Handler.Timestamp
 
       def call(_worker, _job, _queue, &block)
-        provide(::PracticalDeveloper::Container, overridable: overridable?, &block)
+        with_timestamp(overridable: overridable?, &block)
       end
 
       def overridable?

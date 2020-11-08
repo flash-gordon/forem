@@ -65,6 +65,7 @@ module PracticalDeveloper
 
     config.middleware.use SetCookieDomain
     config.middleware.use Handlers::ResolveDependencies
+    config.middleware.use Handlers::Timestamp
 
     # NOTE: [Rails 6]
     # To improve security, Rails embeds the purpose and expiry metadata inside encrypted or signed cookies value.

@@ -1,17 +1,15 @@
 require 'dry/effects'
 
 module Handlers
-  class ResolveDependencies
-    include ::Dry::Effects::Handler.Resolve
+  class Timestamp
+    include ::Dry::Effects::Handler.Timestamp
 
     def initialize(app)
       @app = app
     end
 
     def call(env)
-      provide(::PracticalDeveloper::Container, overridable: overridable?) do
-        @app.(env)
-      end
+      with_timestamp(overridable: overridable?) { @app.(env) }
     end
 
     def overridable?

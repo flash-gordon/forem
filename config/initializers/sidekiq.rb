@@ -42,6 +42,7 @@ Sidekiq.configure_server do |config|
 
   config.server_middleware do |chain|
     chain.add Sidekiq::Handlers::ResolveDependencies
+    chain.add Sidekiq::Handlers::Timestamp
     chain.add Sidekiq::HoneycombMiddleware
   end
 
