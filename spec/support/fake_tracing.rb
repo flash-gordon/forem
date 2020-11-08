@@ -10,7 +10,7 @@ class FakeTracing
 
   def start_span(name:)
     @spans << name
-    yield
+    yield self
   end
 
   def add_field(key, value)

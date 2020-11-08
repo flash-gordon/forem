@@ -1,15 +1,21 @@
 require "rails_helper"
 
-class TestSidekiqWorker
-  include Sidekiq::Worker
-  sidekiq_options queue: :low_priority
-
-  def perform(arg = nil)
-    raise StandardError, "BOOM" if arg == "fail"
-  end
-end
-
 RSpec.describe Sidekiq::HoneycombMiddleware do
+  let(:failing_worker) do
+    Class.new do
+        include Sidekiq::Worker
+      sidekiq_options queue: :low_priority
+
+      def perform(arg = nil)
+        raise StandardError, "BOOM" if arg == "fail"
+      end
+    end
+  end
+
+  before do
+    stub_const('TestSidekiqWorker', failing_worker)
+  end
+
   let(:expected_hash) do
     {
       "sidekiq.class" => TestSidekiqWorker.to_s,
@@ -18,6 +24,10 @@ RSpec.describe Sidekiq::HoneycombMiddleware do
       "sidekiq.args" => ["dont fail"],
       "sidekiq.result" => "success"
     }
+  end
+
+  let(:captured_args) do
+    tracing_backend.fields.transform_values(&:first)
   end
 
   before do
@@ -31,10 +41,7 @@ RSpec.describe Sidekiq::HoneycombMiddleware do
       TestSidekiqWorker.perform_async("dont fail")
     end
 
-    collected_data = Honeycomb.libhoney.events.map(&:data).detect do |h|
-      h["sidekiq.args"] == expected_hash["sidekiq.args"]
-    end
-    expect(collected_data).to include(expected_hash)
+    expect(captured_args).to include(expected_hash)
   end
 
   context "without args" do
@@ -53,10 +60,8 @@ RSpec.describe Sidekiq::HoneycombMiddleware do
         TestSidekiqWorker.perform_async
       end
 
-      collected_data = Honeycomb.libhoney.events.map(&:data).detect do |h|
-        h["sidekiq.args"] == expected_hash["sidekiq.args"]
-      end
-      expect(collected_data).to include(expected_hash)
+      expect(tracing_backend.spans).to eql(%w(sidekiq))
+      expect(captured_args).to include(expected_hash)
     end
   end
 
@@ -77,10 +82,7 @@ RSpec.describe Sidekiq::HoneycombMiddleware do
         expect { TestSidekiqWorker.perform_async("fail") }.to raise_error(StandardError)
       end
 
-      collected_data = Honeycomb.libhoney.events.map(&:data).detect do |h|
-        h["sidekiq.args"] == error_hash["sidekiq.args"]
-      end
-      expect(collected_data).to include(error_hash)
+      expect(captured_args).to include(error_hash)
     end
   end
 end

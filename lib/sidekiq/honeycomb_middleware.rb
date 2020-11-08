@@ -1,11 +1,13 @@
 module Sidekiq
   class HoneycombMiddleware
+    include ::Dry::Effects.Resolve(:tracing)
+
     # @param [Object] worker the worker instance
     # @param [Hash] job the full job payload
     #   * @see https://github.com/mperham/sidekiq/wiki/Job-Format
     # @param [String] queue the name of the queue the job was pulled from
     def call(worker, job, queue)
-      Honeycomb.start_span(name: "sidekiq") do |span|
+      tracing.start_span(name: "sidekiq") do |span|
         span.add_field("sidekiq.class", worker.class.name)
         span.add_field("sidekiq.queue", queue)
         span.add_field("sidekiq.jid", job["jid"])

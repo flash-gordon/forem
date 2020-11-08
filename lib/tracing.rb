@@ -5,10 +5,8 @@ class Tracing
     @backend = backend
   end
 
-  def start_span(name:)
-    @backend.start_span(name: name) do
-      yield
-    end
+  def start_span(name:, &block)
+    @backend.start_span(name: name, &block)
   end
 
   def add_field(key, value)
