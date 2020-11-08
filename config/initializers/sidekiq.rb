@@ -41,6 +41,7 @@ Sidekiq.configure_server do |config|
   config.redis = { url: sidekiq_url }
 
   config.server_middleware do |chain|
+    chain.add Sidekiq::Handlers::ResolveDependencies
     chain.add Sidekiq::HoneycombMiddleware
   end
 
